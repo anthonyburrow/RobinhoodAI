@@ -1,0 +1,2 @@
+# RobinhoodAI
+stonks
