@@ -20,7 +20,7 @@ def _build_model(X, y):
 
     return model
 
-
+#jajajaja
 def generate_model(data, slice_size=None):
     scaled_data = scale(data)
 
