@@ -6,6 +6,10 @@ def main():
 
     bot = RobinhoodAI()
 
+    # bot.validation_test('F')
+
+    bot.stop()
+
 
 if __name__ == '__main__':
     main()

@@ -1,4 +1,4 @@
-from pyrh import Robinhood
+import robin_stocks as rh
 import numpy as np
 import sched
 import time
@@ -26,7 +26,6 @@ class RobinhoodAI:
         log_fn = 'RobinhoodAI'
         self._logger = log.setup_log(log_fn)
 
-        self._rh = Robinhood()
         self._rh_login()
 
         self._model = None
@@ -39,15 +38,19 @@ class RobinhoodAI:
         pwd = credentials['password']
 
         self._logger.info('Attempting to log in with Robinhood...')
-        self._rh.login(username=user, password=pwd)
+        rh.login(username=user, password=pwd)
         self._logger.info('Login successful.\n')
+
+    def _rh_logout(self):
+        rh.logout()
+        self._logger.info('Logged out of Robinhood.\n')
 
     def _get_data_single(self, fields, stock, interval, span):
         msg = (f'Retrieving historical quotes for stock {stock} at'
                f'{interval} interval over a {span} span.')
         self._logger.info(msg)
 
-        quotes = self._rh.get_historical_quotes(stock, interval, span)
+        quotes = rh.get_stock_historicals(stock, interval, span)
         quotes = quotes['results'][0]['historicals']
 
         if isinstance(fields, str):
@@ -110,7 +113,7 @@ class RobinhoodAI:
         model_fn = 'model.p'
         self._model = self._train(data, output=model_fn)
 
-    def _predict(self, X):
+    def _predict(self, X, model):
         pass
 
     def predict(self):
@@ -134,12 +137,16 @@ class RobinhoodAI:
         model = self.val_model(data[:training_len])
 
         y_observed = data[training_len:]
-        y_predicted = self._predict()
-        # do predictions
+        y_predicted = self._predict(model)
 
-    def start_bot(self):
+    def start(self):
         self._logger.info('Starting up RobinhoodAI bot...\n')
 
         # self._scheduler = sched.scheduler(time.time, time.sleep)
         # self._scheduler.enter(1, 1, self._run)
         # self._scheduler.run()
+
+    def stop(self):
+        self._rh_logout()
+
+        self._logger.info('Bot stopped successfully.')
