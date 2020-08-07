@@ -18,3 +18,10 @@ def get_slices(data, slice_size, keep_ends=False):
     X = np.lib.stride_tricks.as_strided(data, X_shape, 2 * data.strides)
 
     return X
+
+
+def auto_slice_size(data):
+    slice_size = np.ceil(0.03 * len(data))
+    slice_size = int(slice_size)
+
+    return slice_size

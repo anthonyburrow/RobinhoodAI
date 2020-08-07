@@ -1,5 +1,4 @@
 import robin_stocks as rh
-import numpy as np
 import sched
 import time
 import json
@@ -8,16 +7,23 @@ import os.path
 
 from mypytools.util import log
 
+from read import get_historicals
+from train import generate_model
+from validation import ValidationTest
+from util import auto_slice_size
 
-# Defaults
-historical_fields = 'high_price'
-historical_interval = '5minute'
-historical_span = 'month'
+
+def_hist_params = {
+    'stocks': [],
+    'fields': ['high_price'],
+    'interval': 'day',
+    'span': 'year'
+}
 
 _user_path = './user'
 
 _model_path = './models'
-_model_fn = 'model_full.p'
+_model_fn = 'model.p'
 
 
 class RobinhoodAI:
@@ -26,9 +32,19 @@ class RobinhoodAI:
         log_fn = 'RobinhoodAI'
         self._logger = log.setup_log(log_fn)
 
+        self._setup()
         self._rh_login()
 
         self._model = None
+        self._slice_size = None
+
+    def _setup(self):
+        self._logger.info('Setting up environment...')
+
+        paths = (_user_path, _model_path)
+        for path in paths:
+            if not os.path.exists(path):
+                os.makedirs(path)
 
     def _rh_login(self):
         with open(f'{_user_path}/cred.json') as F:
@@ -43,36 +59,8 @@ class RobinhoodAI:
 
     def _rh_logout(self):
         rh.logout()
+
         self._logger.info('Logged out of Robinhood.\n')
-
-    def _get_data_single(self, fields, stock, interval, span):
-        msg = (f'Retrieving historical quotes for stock {stock} at'
-               f'{interval} interval over a {span} span.')
-        self._logger.info(msg)
-
-        quotes = rh.get_stock_historicals(stock, interval, span)
-        quotes = quotes['results'][0]['historicals']
-
-        if isinstance(fields, str):
-            data = [date[fields] for date in quotes]
-        elif len(fields) == 1:
-            f = fields[0]
-            data = [date[f] for date in quotes]
-        else:
-            data = [[date[f] for f in fields] for date in quotes]
-
-        return data
-
-    def _get_data(self, stocks, fields, interval, span):
-        if isinstance(stocks, str):
-            data = self._get_data_single(fields, stocks, interval, span)
-        elif len(stocks) == 1:
-            data = self._get_data_single(fields, stocks[0], interval, span)
-        else:
-            data = [self._get_data_single(fields, s, interval, span)
-                    for s in stocks]
-
-        return np.array(data)
 
     @property
     def model(self):
@@ -80,38 +68,35 @@ class RobinhoodAI:
             # Load model if available
             model_fn = f'{_model_path}/{_model_fn}'
             if os.path.isfile(model_fn):
-                model = pickle.load(open(model_fn, 'rb'))
+                self._model = pickle.load(open(model_fn, 'rb'))
             else:
                 msg = ('Model must to be generated with `.train()` before'
                        'attempting to use it.')
                 self._logger.error(msg)
                 return
 
-        return model
+        return self._model
 
-    def _train(self, data, output):
-        from .train import generate_model
+    def train(self, historical_params=def_hist_params, slice_size=None):
+        self._logger.info('Generating model...')
+
+        self._logger.info('Retrieving historical quotes...')
+        data = get_historicals(historical_params)
+
+        if slice_size is None:
+            self._slice_size = auto_slice_size(data)
+        else:
+            self._slice_size = slice_size
 
         self._logger.info('Generating model...')
-        model = generate_model(data)
+        self._model = generate_model(data, self._slice_size)
 
         # Pickle/save the model after training
-        model_fn = f'{_model_path}/{output}'
+        model_fn = f'{_model_path}/{_model_fn}'
         self._logger.info(f'Saving model to {model_fn}...')
-        if not os.path.exists(_model_path):
-            os.makedirs(_model_path)
-        pickle.dump(model, open(model_fn, 'wb'))
+        pickle.dump(self._model, open(model_fn, 'wb'))
 
         self._logger.info('Training complete.\n')
-
-        return model
-
-    def train(self, stocks, fields=historical_fields,
-              interval=historical_interval, span=historical_span):
-        data = self._get_data(stocks, fields, interval, span)
-
-        model_fn = 'model.p'
-        self._model = self._train(data, output=model_fn)
 
     def _predict(self, X, model):
         pass
@@ -119,25 +104,16 @@ class RobinhoodAI:
     def predict(self):
         pass
 
-    def val_model(self, data):
-        # Load model if available
-        model_fn = f'{_model_path}/val_model.p'
-        if os.path.isfile(model_fn):
-            model = pickle.load(open(model_fn, 'rb'))
-        else:
-            model = self._train(data, output=model_fn)
+    def validation_test(self, historical_params=def_hist_params,
+                        slice_size=None):
+        self._logger('Performing validation test...')
 
-        return model
+        val = ValidationTest(historical_params, slice_size)
+        val.run()
 
-    def validation_test(self, stocks, fields=historical_fields,
-                        interval=historical_interval, span=historical_span):
-        data = self._get_data(stocks, fields, interval, span)
+        # probably do more with testing/optimization, idk yet
 
-        training_len = np.ceil(len(data) * 0.8)
-        model = self.val_model(data[:training_len])
-
-        y_observed = data[training_len:]
-        y_predicted = self._predict(model)
+        self._logger('Finished validation test.')
 
     def start(self):
         self._logger.info('Starting up RobinhoodAI bot...\n')

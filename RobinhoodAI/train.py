@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-from .util import scale, get_slices
+from .util import scale, get_slices, auto_slice_size
 
 
 def _build_model(X, y):
@@ -22,11 +22,12 @@ def _build_model(X, y):
 
 
 def generate_model(data, slice_size=None):
+    data = np.asarray(data)
+
     scaled_data = scale(data)
 
     if slice_size is None:
-        slice_size = np.ceil(len(data) / 35)
-        slice_size = int(slice_size)
+        slice_size = auto_slice_size(data)
 
     x_train = get_slices(scaled_data, slice_size=slice_size)
     y_train = scaled_data[slice_size:]
