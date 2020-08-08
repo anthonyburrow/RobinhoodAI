@@ -1,0 +1,26 @@
+figure.figsize       : 4, 3
+figure.dpi           : 600
+figure.autolayout    : False
+
+legend.fontsize      : medium
+
+xtick.direction      : in
+xtick.top            : True
+xtick.major.top      : True
+xtick.minor.top      : True
+xtick.labelsize      : x-small
+
+ytick.direction      : in
+ytick.right          : True
+ytick.major.right    : True
+ytick.minor.right    : True
+ytick.labelsize      : x-small
+
+lines.linewidth      : 1
+
+errorbar.capsize     : 2
+
+scatter.marker : o
+
+font.family          : serif
+mathtext.fontset     : dejavuserif

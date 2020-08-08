@@ -1,3 +1,7 @@
+# custom
+RobinhoodAI/user/*
+RobinhoodAI/plots/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

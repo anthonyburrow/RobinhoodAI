@@ -7,10 +7,10 @@ import os.path
 
 from mypytools.util import log
 
-from read import get_historicals
-from train import generate_model
-from validation import ValidationTest
-from util import auto_slice_size
+from .read import get_historicals
+from .train import generate_model
+from .validation import ValidationTest
+from .util import auto_slice_size
 
 
 def_hist_params = {

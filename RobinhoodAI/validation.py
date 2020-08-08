@@ -51,3 +51,5 @@ class ValidationTest:
         X_predict = get_slices(X_predict_values, self._slice_size)
 
         y_predict = predict(X_predict, self.model)
+
+        plot(y_observe, y_predict, filename='validation_test')

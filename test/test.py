@@ -1,23 +1,15 @@
-from pyrh import Robinhood
-from datetime import datetime
-import numpy as np
-import tulipy as ti
-import sched
-import time
-import json
+from RobinhoodAI import RobinhoodAI
 
-# username = 'chipperorc'
-# password = 'JamesFranco666'
 
-# rh = Robinhood()
-# rh.login(username=username, password=password)
+def main():
+    print('Running RobinhoodAI bot...')
 
-# historical_quotes = rh.get_historical_quotes(company_id['ford'], '5minute',
-#                                              'day')
+    bot = RobinhoodAI()
 
-# print(historical_quotes)
+    # bot.validation_test('F')
 
-with open('./user/cred.json') as F:
-    credentials = json.load(F)
+    bot.stop()
 
-print(credentials['username'])
+
+if __name__ == '__main__':
+    main()
