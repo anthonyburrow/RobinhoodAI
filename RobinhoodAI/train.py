@@ -6,6 +6,9 @@ from tensorflow import keras
 from .util import scale, get_slices, auto_slice_size
 
 
+_max_forecast = 10   # days
+
+
 def _build_model(X, y):
     model = tf.keras.Sequential()
     model.add(keras.layers.LSTM(units=50, return_sequences=True,
@@ -29,8 +32,8 @@ def generate_model(data, slice_size=None):
     if slice_size is None:
         slice_size = auto_slice_size(data)
 
-    x_train = get_slices(scaled_data, slice_size=slice_size)
-    y_train = scaled_data[slice_size:]
+    x_train = get_slices(scaled_data[:-_max_forecast], slice_size=slice_size)
+    y_train = get_slices(scaled_data[slice_size:], slice_size=_max_forecast)
 
     x_train = x_train[:, :, np.newaxis]
 
