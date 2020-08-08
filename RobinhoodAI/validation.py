@@ -4,19 +4,19 @@ import os.path
 
 from mypytools.util import log
 
-from RobinhoodAI import _model_path
-from read import get_historicals
-from train import generate_model
-from util import auto_slice_size
+from .RobinhoodAI import _model_path
+from .read import get_historicals
+from .train import generate_model, max_forecast, predict
+from .util import auto_slice_size, get_slices
 
 
 class ValidationTest:
 
-    def __init__(self, historical_params, slice_size=None):
+    def __init__(self, stocks, historical_params, slice_size=None):
         log_fn = 'validation_test'
         self._logger = log.setup_log(log_fn)
 
-        self.data = get_historicals(historical_params)
+        self.data = get_historicals(stocks, historical_params)
 
         self.training_len = around(len(self.data) * 0.8)
 
@@ -41,6 +41,13 @@ class ValidationTest:
         return model
 
     def run(self):
-        y_observed = self.data[self.training_len:]
+        y_obs_start = self.training_len - max_forecast + 1
+        y_observe_values = self.data[y_obs_start:]
+        y_observe = get_slices(y_observe_values, max_forecast)
 
-        y_predicted = self._predict(self.model)
+        X_pred_start = y_obs_start - self._slice_size
+        X_pred_end = -max_forecast
+        X_predict_values = self.data[X_pred_start:X_pred_end]
+        X_predict = get_slices(X_predict_values, self._slice_size)
+
+        y_predict = predict(X_predict, self.model)

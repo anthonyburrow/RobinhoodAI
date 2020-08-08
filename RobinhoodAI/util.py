@@ -1,12 +1,17 @@
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
 
 
-_scaler = MinMaxScaler()
+def scale(X, feat_range=(0, 1)):
+    _min, _max = feat_range
 
+    _X_min, _X_max = X.min(), X.max()
 
-def scale(data):
-    return _scaler.fit_transform(data[:, np.newaxis]).squeeze()
+    X_diff = X - _X_min
+    X_fraction = (_max - _min) / (_X_max - _X_min)
+
+    X_scaled = X_diff * X_fraction + _min
+
+    return X_scaled
 
 
 def get_slices(data, slice_size):

@@ -3,10 +3,10 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-from .util import scale, get_slices, auto_slice_size
+from .util import scale, get_slices
 
 
-_max_forecast = 10   # days
+max_forecast = 10   # days
 
 
 def _build_model(X, y):
@@ -24,19 +24,27 @@ def _build_model(X, y):
     return model
 
 
-def generate_model(data, slice_size=None):
-    data = np.asarray(data)
+def generate_model(X, slice_size):
+    X = np.asarray(X)
 
-    scaled_data = scale(data)
+    X_scaled = scale(X)
 
-    if slice_size is None:
-        slice_size = auto_slice_size(data)
+    X_train = get_slices(X_scaled[:-max_forecast], slice_size=slice_size)
+    y_train = get_slices(X_scaled[slice_size:], slice_size=max_forecast)
 
-    x_train = get_slices(scaled_data[:-_max_forecast], slice_size=slice_size)
-    y_train = get_slices(scaled_data[slice_size:], slice_size=_max_forecast)
+    X_train = X_train[:, :, np.newaxis]
 
-    x_train = x_train[:, :, np.newaxis]
-
-    model = _build_model(x_train, y_train)
+    model = _build_model(X_train, y_train)
 
     return model
+
+
+def predict(X, model):
+    _min, _max = X.min(), X.max()
+    X_scaled = scale(X)
+
+    y_predict_scaled = model.predict(X_scaled)
+
+    y_predict = scale(y_predict_scaled, feat_range=(_min, _max))
+
+    return y_predict

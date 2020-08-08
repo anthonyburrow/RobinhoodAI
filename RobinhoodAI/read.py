@@ -16,8 +16,7 @@ def _get_hist_single(stock, fields, interval, span):
     return data
 
 
-def get_historicals(historical_params):
-    stocks = historical_params['stocks']
+def get_historicals(stocks, historical_params):
     fields = historical_params['fields']
     interval = historical_params['interval']
     span = historical_params['span']

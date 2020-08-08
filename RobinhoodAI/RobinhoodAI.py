@@ -14,7 +14,6 @@ from util import auto_slice_size
 
 
 def_hist_params = {
-    'stocks': [],
     'fields': ['high_price'],
     'interval': 'day',
     'span': 'year'
@@ -77,11 +76,12 @@ class RobinhoodAI:
 
         return self._model
 
-    def train(self, historical_params=def_hist_params, slice_size=None):
+    def train(self, stocks, historical_params: dict = def_hist_params,
+              slice_size: int = None):
         self._logger.info('Generating model...')
 
         self._logger.info('Retrieving historical quotes...')
-        data = get_historicals(historical_params)
+        data = get_historicals(stocks, historical_params)
 
         if slice_size is None:
             self._slice_size = auto_slice_size(data)
@@ -104,11 +104,12 @@ class RobinhoodAI:
     def predict(self):
         pass
 
-    def validation_test(self, historical_params=def_hist_params,
-                        slice_size=None):
+    def validation_test(self, stocks,
+                        historical_params: dict = def_hist_params,
+                        slice_size: int = None):
         self._logger('Performing validation test...')
 
-        val = ValidationTest(historical_params, slice_size)
+        val = ValidationTest(stocks, historical_params, slice_size)
         val.run()
 
         # probably do more with testing/optimization, idk yet
