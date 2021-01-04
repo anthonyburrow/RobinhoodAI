@@ -9,7 +9,7 @@ from .util import scale, get_slices
 max_forecast = 10   # days
 
 
-def _build_model(X, y):
+def _train_model(X, y):
     model = tf.keras.Sequential()
     model.add(keras.layers.LSTM(units=50, return_sequences=True,
                                 input_shape=(X.shape[1], 1)))
@@ -34,7 +34,7 @@ def generate_model(X, slice_size):
 
     X_train = X_train[:, :, np.newaxis]
 
-    model = _build_model(X_train, y_train)
+    model = _train_model(X_train, y_train)
 
     return model
 
